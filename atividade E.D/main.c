@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Estrutura do nó
 typedef struct No {
     int valor;
     struct No *prox;
 } No;
 
-// Função pra criar nó
+// UTIL 
 No* criarNo(int valor) {
     No *novo = (No*) malloc(sizeof(No));
 
-    if (novo == NULL) {
-        printf("Erro: Falta de memoria!\n");
+    if (!novo) {
+        printf("\n[ERRO] Falha de alocacao de memoria!\n");
         return NULL;
     }
 
@@ -21,171 +20,211 @@ No* criarNo(int valor) {
     return novo;
 }
 
-// Inserir no início
-No* inserirInicio(No *lista, int valor) {
-    No *novo = criarNo(valor);
-    if (novo == NULL) return lista;
-
-    novo->prox = lista;
-    return novo;
+int tamanhoLista(No *lista) {
+    int cont = 0;
+    while (lista) {
+        cont++;
+        lista = lista->prox;
+    }
+    return cont;
 }
 
-// Inserir no final
-No* inserirFinal(No *lista, int valor) {
-    No *novo = criarNo(valor);
-    if (novo == NULL) return lista;
+// LEITURA S...
+int lerInteiro(const char *msg) {
+    int valor;
+    int ok;
 
-    if (lista == NULL) return novo;
+    do {
+        printf("%s", msg);
+        ok = scanf("%d", &valor);
 
-    No *aux = lista;
-    while (aux->prox != NULL) {
-        aux = aux->prox;
-    }
+        if (ok != 1) {
+            printf("[ERRO] Entrada invalida! Digite um numero.\n");
+            while (getchar() != '\n'); // limpa buffer
+        }
 
-    aux->prox = novo;
-    return lista;
+    } while (ok != 1);
+
+    return valor;
 }
 
-// Inserir no meio 
-No* inserirMeio(No *lista, int valor, int pos) {
-    if (pos == 0) return inserirInicio(lista, valor);
-
+// INSERÇÕES
+void inserirInicio(No **lista, int valor) {
     No *novo = criarNo(valor);
-    if (novo == NULL) return lista;
+    if (!novo) return;
 
-    No *aux = lista;
-    int i = 0;
-
-    while (aux != NULL && i < pos - 1) {
-        aux = aux->prox;
-        i++;
-    }
-
-    if (aux == NULL) {
-        printf("Posicao invalida!\n");
-        free(novo);
-        return lista;
-    }
-
-    novo->prox = aux->prox;
-    aux->prox = novo;
-
-    return lista;
+    novo->prox = *lista;
+    *lista = novo;
 }
 
-// Imprimi lista
-void imprimir(No *lista) {
-    if (lista == NULL) {
-        printf("Lista vazia!\n");
+void inserirFinal(No **lista, int valor) {
+    No *novo = criarNo(valor);
+    if (!novo) return;
+
+    if (*lista == NULL) {
+        *lista = novo;
         return;
     }
 
-    No *aux = lista;
-    while (aux != NULL) {
-        printf("%d -> ", aux->valor);
+    No *aux = *lista;
+    while (aux->prox)
         aux = aux->prox;
-    }
-    printf("NULL\n");
+
+    aux->prox = novo;
 }
 
-// Apagar elementos com valor específico
-No* apagarElemento(No *lista, int valor) {
-    No *aux = lista;
-    No *ant = NULL;
+void inserirMeio(No **lista, int valor, int pos) {
+    int tam = tamanhoLista(*lista);
 
-    while (aux != NULL) {
-        if (aux->valor == valor) {
-            if (ant == NULL) {
-                lista = aux->prox;
-                free(aux);
-                aux = lista;
+    if (pos < 0 || pos > tam) {
+        printf("\n[ERRO] Posicao invalida!\n");
+        return;
+    }
+
+    if (pos == 0) {
+        inserirInicio(lista, valor);
+        return;
+    }
+
+    No *novo = criarNo(valor);
+    if (!novo) return;
+
+    No *aux = *lista;
+    for (int i = 0; i < pos - 1; i++)
+        aux = aux->prox;
+
+    novo->prox = aux->prox;
+    aux->prox = novo;
+}
+
+// IMPRESSÃO
+void imprimirLista(No *lista) {
+    if (!lista) {
+        printf("\n[INFO] Lista vazia.\n");
+        return;
+    }
+
+    printf("\nLista: ");
+
+    int contador = 0;
+    while (lista && contador < 50) {
+        printf("[%d] -> ", lista->valor);
+        lista = lista->prox;
+        contador++;
+    }
+
+    if (contador == 50)
+        printf("... POSSIVEL LOOP NA LISTA!\n");
+    else
+        printf("NULL\n");
+}
+
+// REMOÇÃO
+void apagarElemento(No **lista, int valor) {
+    if (*lista == NULL) {
+        printf("\n[INFO] Lista vazia.\n");
+        return;
+    }
+
+    No *atual = *lista;
+    No *anterior = NULL;
+    int removidos = 0;
+
+    while (atual) {
+        if (atual->valor == valor) {
+            No *temp = atual;
+
+            if (anterior == NULL) {
+                *lista = atual->prox;
+                atual = *lista;
             } else {
-                ant->prox = aux->prox;
-                free(aux);
-                aux = ant->prox;
+                anterior->prox = atual->prox;
+                atual = atual->prox;
             }
+
+            free(temp);
+            removidos++;
         } else {
-            ant = aux;
-            aux = aux->prox;
+            anterior = atual;
+            atual = atual->prox;
         }
     }
 
-    return lista;
+    printf("\n[INFO] %d elemento(s) removido(s).\n", removidos);
 }
 
-// Apagar lista
-No* apagarLista(No *lista) {
-    No *aux;
+void apagarLista(No **lista) {
+    No *atual = *lista;
 
-    while (lista != NULL) {
-        aux = lista;
-        lista = lista->prox;
-        free(aux);
+    while (atual) {
+        No *temp = atual;
+        atual = atual->prox;
+        free(temp);
     }
 
-    printf("Lista apagada!\n");
-    return NULL;
+    *lista = NULL;
+    printf("\n[INFO] Lista totalmente removida.\n");
 }
 
-// Menu
+// MENU
+void menu() {
+    printf("\n MENU \n");
+    printf("0 - Sair\n");
+    printf("1 - Inserir no Inicio\n");
+    printf("2 - Inserir no Final\n");
+    printf("3 - Inserir no Meio\n");
+    printf("4 - Imprimir\n");
+    printf("5 - Apagar Elemento\n");
+    printf("6 - Apagar Lista\n");
+    printf(" \n");
+}
+
+// MAIN
 int main() {
     No *lista = NULL;
     int opcao, valor, pos;
 
     do {
-        printf("\n--- MENU ---\n");
-        printf("0 - Sair\n");
-        printf("1 - Inserir no Inicio\n");
-        printf("2 - Inserir no Final\n");
-        printf("3 - Inserir no Meio\n");
-        printf("4 - Imprimir\n");
-        printf("5 - Apagar Elemento\n");
-        printf("6 - Apagar Lista\n");
-        printf("Escolha: ");
-        scanf("%d", &opcao);
+        menu();
+        opcao = lerInteiro("Escolha: ");
 
-        switch(opcao) {
+        switch (opcao) {
             case 1:
-                printf("Valor: ");
-                scanf("%d", &valor);
-                lista = inserirInicio(lista, valor);
+                valor = lerInteiro("Valor: ");
+                inserirInicio(&lista, valor);
                 break;
 
             case 2:
-                printf("Valor: ");
-                scanf("%d", &valor);
-                lista = inserirFinal(lista, valor);
+                valor = lerInteiro("Valor: ");
+                inserirFinal(&lista, valor);
                 break;
 
             case 3:
-                printf("Valor: ");
-                scanf("%d", &valor);
-                printf("Posicao: ");
-                scanf("%d", &pos);
-                lista = inserirMeio(lista, valor, pos);
+                valor = lerInteiro("Valor: ");
+                pos = lerInteiro("Posicao: ");
+                inserirMeio(&lista, valor, pos);
                 break;
 
             case 4:
-                imprimir(lista);
+                imprimirLista(lista);
                 break;
 
             case 5:
-                printf("Valor a remover: ");
-                scanf("%d", &valor);
-                lista = apagarElemento(lista, valor);
+                valor = lerInteiro("Valor a remover: ");
+                apagarElemento(&lista, valor);
                 break;
 
             case 6:
-                lista = apagarLista(lista);
+                apagarLista(&lista);
                 break;
 
             case 0:
-                lista = apagarLista(lista);
-                printf("Encerrando...\n");
+                apagarLista(&lista);
+                printf("\nEncerrando...\n");
                 break;
 
             default:
-                printf("Opcao invalida!\n");
+                printf("\n[ERRO] Opcao invalida!\n");
         }
 
     } while (opcao != 0);
