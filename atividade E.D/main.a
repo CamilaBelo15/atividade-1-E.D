@@ -1,0 +1,25 @@
+#include <stdio.h>
+
+int div_rec(int a, int b) {
+    if (b == 0) {
+        printf("Erro: divisao por zero\n");
+        return 0;
+    }
+
+    if (a < b) {
+        return 0;
+    }
+
+    return 1 + div_rec(a - b, b);
+}
+
+int main() {
+    int a = 10;
+    int b = 3;
+
+    int resultado = div_rec(a, b);
+
+    printf("Resultado da divisao: %d\n", resultado);
+
+    return 0;
+}

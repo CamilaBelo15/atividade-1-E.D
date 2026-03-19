@@ -1,50 +1,194 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Estrutura do nó
+typedef struct No {
+    int valor;
+    struct No *prox;
+} No;
 
-// Parte a: Resolução por ponteiros
-void calcular_por_ponteiros(int *num, int *dobro, int *triplo) {
-    *dobro = *num * 2;
-    *triplo = *num * 3;
+// Função pra criar nó
+No* criarNo(int valor) {
+    No *novo = (No*) malloc(sizeof(No));
+
+    if (novo == NULL) {
+        printf("Erro: Falta de memoria!\n");
+        return NULL;
+    }
+
+    novo->valor = valor;
+    novo->prox = NULL;
+    return novo;
 }
 
-// Parte b: Resolução por alocação dinâmica
-void calcular_por_alocacao_dinamica(int num) {
-    int *numero = (int *)malloc(sizeof(int));
-    if (numero == NULL) {
-        printf("Erro na alocacao de memoria.\n");
-        return;
-    }
-    *numero = num;
-    int *dobro = (int *)malloc(sizeof(int));
-    int *triplo = (int *)malloc(sizeof(int));
-    if (dobro == NULL || triplo == NULL) {
-        printf("Erro na alocacao de memoria.\n");
-        free(numero);
-        free(dobro);
-        free(triplo);
-        return;
-    }
-    *dobro = *numero * 2;
-    *triplo = *numero * 3;
-    printf("Por alocacao dinamica: Dobro = %d, Triplo = %d\n", *dobro, *triplo);
-    free(numero);
-    free(dobro);
-    free(triplo);  
+// Inserir no início
+No* inserirInicio(No *lista, int valor) {
+    No *novo = criarNo(valor);
+    if (novo == NULL) return lista;
+
+    novo->prox = lista;
+    return novo;
 }
 
+// Inserir no final
+No* inserirFinal(No *lista, int valor) {
+    No *novo = criarNo(valor);
+    if (novo == NULL) return lista;
+
+    if (lista == NULL) return novo;
+
+    No *aux = lista;
+    while (aux->prox != NULL) {
+        aux = aux->prox;
+    }
+
+    aux->prox = novo;
+    return lista;
+}
+
+// Inserir no meio 
+No* inserirMeio(No *lista, int valor, int pos) {
+    if (pos == 0) return inserirInicio(lista, valor);
+
+    No *novo = criarNo(valor);
+    if (novo == NULL) return lista;
+
+    No *aux = lista;
+    int i = 0;
+
+    while (aux != NULL && i < pos - 1) {
+        aux = aux->prox;
+        i++;
+    }
+
+    if (aux == NULL) {
+        printf("Posicao invalida!\n");
+        free(novo);
+        return lista;
+    }
+
+    novo->prox = aux->prox;
+    aux->prox = novo;
+
+    return lista;
+}
+
+// Imprimi lista
+void imprimir(No *lista) {
+    if (lista == NULL) {
+        printf("Lista vazia!\n");
+        return;
+    }
+
+    No *aux = lista;
+    while (aux != NULL) {
+        printf("%d -> ", aux->valor);
+        aux = aux->prox;
+    }
+    printf("NULL\n");
+}
+
+// Apagar elementos com valor específico
+No* apagarElemento(No *lista, int valor) {
+    No *aux = lista;
+    No *ant = NULL;
+
+    while (aux != NULL) {
+        if (aux->valor == valor) {
+            if (ant == NULL) {
+                lista = aux->prox;
+                free(aux);
+                aux = lista;
+            } else {
+                ant->prox = aux->prox;
+                free(aux);
+                aux = ant->prox;
+            }
+        } else {
+            ant = aux;
+            aux = aux->prox;
+        }
+    }
+
+    return lista;
+}
+
+// Apagar lista
+No* apagarLista(No *lista) {
+    No *aux;
+
+    while (lista != NULL) {
+        aux = lista;
+        lista = lista->prox;
+        free(aux);
+    }
+
+    printf("Lista apagada!\n");
+    return NULL;
+}
+
+// Menu
 int main() {
-    int numero;
-    printf("Digite um numero: ");
-    scanf("%d", &numero);
+    No *lista = NULL;
+    int opcao, valor, pos;
 
-    // Parte a: Usando ponteiros
-    int dobro, triplo;
-    calcular_por_ponteiros(&numero, &dobro, &triplo);
-    printf("Por ponteiros: Dobro = %d, Triplo = %d\n", dobro, triplo);
+    do {
+        printf("\n--- MENU ---\n");
+        printf("0 - Sair\n");
+        printf("1 - Inserir no Inicio\n");
+        printf("2 - Inserir no Final\n");
+        printf("3 - Inserir no Meio\n");
+        printf("4 - Imprimir\n");
+        printf("5 - Apagar Elemento\n");
+        printf("6 - Apagar Lista\n");
+        printf("Escolha: ");
+        scanf("%d", &opcao);
 
-    // Parte b: Usando alocação dinâmica
-    calcular_por_alocacao_dinamica(numero);
+        switch(opcao) {
+            case 1:
+                printf("Valor: ");
+                scanf("%d", &valor);
+                lista = inserirInicio(lista, valor);
+                break;
+
+            case 2:
+                printf("Valor: ");
+                scanf("%d", &valor);
+                lista = inserirFinal(lista, valor);
+                break;
+
+            case 3:
+                printf("Valor: ");
+                scanf("%d", &valor);
+                printf("Posicao: ");
+                scanf("%d", &pos);
+                lista = inserirMeio(lista, valor, pos);
+                break;
+
+            case 4:
+                imprimir(lista);
+                break;
+
+            case 5:
+                printf("Valor a remover: ");
+                scanf("%d", &valor);
+                lista = apagarElemento(lista, valor);
+                break;
+
+            case 6:
+                lista = apagarLista(lista);
+                break;
+
+            case 0:
+                lista = apagarLista(lista);
+                printf("Encerrando...\n");
+                break;
+
+            default:
+                printf("Opcao invalida!\n");
+        }
+
+    } while (opcao != 0);
 
     return 0;
 }
